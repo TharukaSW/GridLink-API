@@ -1,0 +1,6 @@
+@GridLink_HostAddress = http://localhost:5015
+
+GET {{GridLink_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
