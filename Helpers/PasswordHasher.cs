@@ -1,4 +1,4 @@
-﻿using System.Security.Cryptography;
+using System.Security.Cryptography;
 
 namespace GridLink.Helpers
 {
@@ -32,7 +32,7 @@ namespace GridLink.Helpers
             }
 
             string[] parts = storedHash.Split('.');
-            if (parts.Length == 2)
+            if (parts.Length != 2)
             {
                 return false;
             }
