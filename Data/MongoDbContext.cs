@@ -26,21 +26,25 @@ namespace GridLink.Data
         {
             try
             {
-                var indexKeysDefinition = Builders<Users>.IndexKeys.Ascending(u => u.NIC);
-                var indexOptions = new CreateIndexOptions { Unique = true };
-                var nicIndexModel = new CreateIndexModel<Users>(indexKeysDefinition, indexOptions);
                 var emailIndexKeys = Builders<Users>.IndexKeys.Ascending(u => u.Email);
-                var emailIndexModel = new CreateIndexModel<Users>(emailIndexKeys, indexOptions);
+                var emailIndexOptions = new CreateIndexOptions { Unique = true };
+                var emailIndexModel = new CreateIndexModel<Users>(emailIndexKeys, emailIndexOptions);
+
+                var nicIndexKeys = Builders<Users>.IndexKeys.Ascending(u => u.NIC);
+                var nicIndexOptions = new CreateIndexOptions 
+                { 
+                    Unique = true, 
+                    Sparse = true,
+                    PartialFilterExpression = Builders<Users>.Filter.Ne(u => u.NIC, string.Empty) 
+                };
+                var nicIndexModel = new CreateIndexModel<Users>(nicIndexKeys, nicIndexOptions);
 
                 users.Indexes.CreateMany(new[] { nicIndexModel, emailIndexModel });
-
             }
             catch(Exception ex)
             {
                 Console.WriteLine($"[MongoDbContext] Notice: Index configuration skipped or already exists: {ex.Message}");
             }
-
-
         }
 
         private void SeedInitialAdminUser()
