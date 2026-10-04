@@ -1,8 +1,22 @@
+// ============================================================================
+// File: SolarStationInfo.cs
+// Project: GridLink - Smart Solar Microgrid Trading System
+// Module: Microgrid Node Management API
+// Description: MongoDB entity model for solar microgrid stations / hubs.
+//              Captures station codes, GPS locations (latitude and longitude),
+//              generation capacity (kW/h), battery storage slots, operating
+//              schedules, and activation status.
+// Course: SE4040 Enterprise Application Development - Assignment 1
+// ============================================================================
+
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace GridLink.Models
 {
+    /// <summary>
+    /// Represents a physical solar microgrid hub in the system.
+    /// </summary>
     public class SolarStationInfo
     {
         [BsonId]

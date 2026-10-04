@@ -1,6 +1,89 @@
 @GridLink_HostAddress = http://localhost:5015
+@authToken = {{login.response.body.data.token}}
 
-GET {{GridLink_HostAddress}}/weatherforecast/
+### 1. Authenticate as BackOffice Admin
+# @name login
+POST {{GridLink_HostAddress}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@gridlink.com",
+  "password": "Admin@123"
+}
+
+### 2. Get All Microgrid Nodes
+GET {{GridLink_HostAddress}}/api/microgrid-nodes
+Authorization: Bearer {{authToken}}
 Accept: application/json
 
-###
+### 3. Get Nearby Microgrid Nodes (Google Maps Query)
+GET {{GridLink_HostAddress}}/api/microgrid-nodes/nearby?latitude=6.9271&longitude=79.8612&radiusKm=25.0
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+### 4. Create a New Solar Microgrid Hub (BackOffice)
+# @name createHub
+POST {{GridLink_HostAddress}}/api/microgrid-nodes
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "stationCode": "HUB-NEG-01",
+  "stationName": "Negombo Coastal Solar Hub",
+  "address": "No 120, Beach Road, Negombo",
+  "latitude": 7.2008,
+  "longitude": 79.8737,
+  "capacityKWh": 450.0,
+  "totalBatterySlots": 12,
+  "availableBatterySlots": 12,
+  "operatingHours": "06:00 - 21:00"
+}
+
+### 5. Get Microgrid Node by Station Code
+GET {{GridLink_HostAddress}}/api/microgrid-nodes/code/HUB-NEG-01
+Authorization: Bearer {{authToken}}
+Accept: application/json
+
+### 6. Update Operational Schedule (BackOffice)
+PATCH {{GridLink_HostAddress}}/api/microgrid-nodes/{{createHub.response.body.data.id}}/schedule
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "operatingHours": "05:30 - 22:30"
+}
+
+### 7. Update Battery Slot Availability (Grid Operator / BackOffice)
+PATCH {{GridLink_HostAddress}}/api/microgrid-nodes/{{createHub.response.body.data.id}}/battery-slots
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "availableBatterySlots": 10
+}
+
+### 8. Deactivate Microgrid Node (Blocked if active energy reservations exist)
+PATCH {{GridLink_HostAddress}}/api/microgrid-nodes/{{createHub.response.body.data.id}}/deactivate
+Authorization: Bearer {{authToken}}
+
+### 9. Reactivate Microgrid Node
+PATCH {{GridLink_HostAddress}}/api/microgrid-nodes/{{createHub.response.body.data.id}}/activate
+Authorization: Bearer {{authToken}}
+
+### 10. Create Energy Booking Slot for Station
+POST {{GridLink_HostAddress}}/api/microgrid-nodes/{{createHub.response.body.data.id}}/slots
+Authorization: Bearer {{authToken}}
+Content-Type: application/json
+
+{
+  "slotTime": "2026-10-06T10:00:00Z",
+  "durationMinutes": 60,
+  "capacityKWh": 50.0,
+  "ratePerKWh": 45.0,
+  "isAvailable": true
+}
+
+### 11. Get Booking Slots for Station
+GET {{GridLink_HostAddress}}/api/microgrid-nodes/{{createHub.response.body.data.id}}/slots
+Authorization: Bearer {{authToken}}
+Accept: application/json
