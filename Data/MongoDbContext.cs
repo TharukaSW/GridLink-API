@@ -30,14 +30,20 @@ namespace GridLink.Data
         {
             try
             {
-                var indexKeysDefinition = Builders<Users>.IndexKeys.Ascending(u => u.NIC);
-                var indexOptions = new CreateIndexOptions { Unique = true };
-                var nicIndexModel = new CreateIndexModel<Users>(indexKeysDefinition, indexOptions);
                 var emailIndexKeys = Builders<Users>.IndexKeys.Ascending(u => u.Email);
-                var emailIndexModel = new CreateIndexModel<Users>(emailIndexKeys, indexOptions);
+                var emailIndexOptions = new CreateIndexOptions { Unique = true };
+                var emailIndexModel = new CreateIndexModel<Users>(emailIndexKeys, emailIndexOptions);
+
+                var nicIndexKeys = Builders<Users>.IndexKeys.Ascending(u => u.NIC);
+                var nicIndexOptions = new CreateIndexOptions 
+                { 
+                    Unique = true, 
+                    Sparse = true,
+                    PartialFilterExpression = Builders<Users>.Filter.Ne(u => u.NIC, string.Empty) 
+                };
+                var nicIndexModel = new CreateIndexModel<Users>(nicIndexKeys, nicIndexOptions);
 
                 users.Indexes.CreateMany(new[] { nicIndexModel, emailIndexModel });
-
                 var stationCodeIndex = new CreateIndexModel<SolarStationInfo>(
                     Builders<SolarStationInfo>.IndexKeys.Ascending(s => s.StationCode),
                     new CreateIndexOptions { Unique = true });

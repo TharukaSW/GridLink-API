@@ -26,6 +26,9 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IEnergyReservationService, EnergyReservationService>();
 
+builder.Services.AddScoped<IProsumerRepository, ProsumerRepository>();
+builder.Services.AddScoped<IProsumerService, ProsumerService>();
+
 var jwtSettings = builder.Configuration.GetSection("JwtSettings").Get<JwtSettings>() ?? new JwtSettings();
 var signingKey = Encoding.UTF8.GetBytes(jwtSettings.Secret);
 
@@ -64,7 +67,6 @@ builder.Services.AddCors(options =>
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 
-// Inline comment: Configure Swagger with JWT Bearer authorization support
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo

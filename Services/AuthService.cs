@@ -8,26 +8,25 @@ using static GridLink.DTOs.AuthDTOs;
 namespace GridLink.Services
 {
     public class AuthService : IAuthService
-
     {
         private readonly IUserRepository _userRepository;
+        private readonly IProsumerRepository _prosumerRepository;
         private readonly JwtHelper _jwtHelper;
 
-        public AuthService(IUserRepository userRepository, JwtHelper jwtHelper)
+        public AuthService(IUserRepository userRepository, IProsumerRepository prosumerRepository, JwtHelper jwtHelper)
         {
             _userRepository = userRepository;
+            _prosumerRepository = prosumerRepository;
             _jwtHelper = jwtHelper;
         }
 
         public async Task<ApiResponse<UserResponseDTO>> RegisterProsumerAsync(RegisterProsumerDto dto)
         {
-
             if (await _userRepository.ExistsByNicAsync(dto.NIC))
             {
                 return ApiResponse<UserResponseDTO>.FailureResult(
                     "A user with this National Identity Card (NIC) is already registered.");
             }
-
 
             if (await _userRepository.ExistsByEmailAsync(dto.Email))
             {
@@ -59,18 +58,25 @@ namespace GridLink.Services
 
         public async Task<ApiResponse<AuthResponseDto>> LoginAsync(LoginDTO dto)
         {
-
+       
             var user = await _userRepository.GetByIdentifierAsync(dto.Identifier);
+            
+            
+            if (user == null)
+            {
+                user = await _prosumerRepository.GetByNicAsync(NicValidator.Normalize(dto.Identifier));
+            }
+
             if (user == null)
             {
                 return ApiResponse<AuthResponseDto>.FailureResult("Invalid NIC/Email or password.");
             }
 
-
             if (!PasswordHasher.VerifyPassword(dto.Password, user.HashPassword))
             {
                 return ApiResponse<AuthResponseDto>.FailureResult("Invalid NIC/Email or password.");
             }
+
 
             if (user.Status == UserStatus.PendingActivation)
             {
@@ -82,6 +88,18 @@ namespace GridLink.Services
             {
                 return ApiResponse<AuthResponseDto>.FailureResult(
                     "Your account has been deactivated. Only a Backoffice officer can reactivate your account.");
+            }
+            
+            if (user.Status == UserStatus.DeactivationRequested)
+            {
+                return ApiResponse<AuthResponseDto>.FailureResult(
+                    "Your account is pending deactivation and cannot log in.");
+            }
+
+            if (user.Status != UserStatus.Active)
+            {
+                return ApiResponse<AuthResponseDto>.FailureResult(
+                    $"Login failed. Your account status is currently: {user.Status}.");
             }
 
             var (token, expiration) = _jwtHelper.GenerateToken(user);
@@ -95,7 +113,6 @@ namespace GridLink.Services
 
             return ApiResponse<AuthResponseDto>.SuccessResult(authResponse, "Login successful.");
         }
-
 
         private static UserResponseDTO MapToResponseDto(Users user)
         {
@@ -113,6 +130,5 @@ namespace GridLink.Services
                 UpdatedAt = user.UpdatedAt
             };
         }
-
     }
 }
