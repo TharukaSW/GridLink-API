@@ -20,8 +20,11 @@ builder.Services.AddSingleton<MongoDbContext>();
 builder.Services.AddSingleton<JwtHelper>();
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<ISolarStationRepository, SolarStationRepository>();
+builder.Services.AddScoped<IEnergyReservationRepository, EnergyReservationRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IEnergyReservationService, EnergyReservationService>();
 
 builder.Services.AddScoped<IProsumerRepository, ProsumerRepository>();
 builder.Services.AddScoped<IProsumerService, ProsumerService>();
@@ -114,5 +117,10 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+using (var scope = app.Services.CreateScope())
+{
+    scope.ServiceProvider.GetRequiredService<MongoDbContext>();
+}
 
 app.Run();
