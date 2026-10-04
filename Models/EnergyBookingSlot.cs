@@ -1,8 +1,20 @@
+// ============================================================================
+// File: EnergyBookingSlot.cs
+// Project: GridLink - Smart Solar Microgrid Trading System
+// Module: Microgrid Node Management API - Slot Booking Management
+// Description: MongoDB entity model for energy drop-off and charging booking
+//              slots allocated under solar microgrid hubs.
+// Course: SE4040 Enterprise Application Development - Assignment 1
+// ============================================================================
+
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
 namespace GridLink.Models
 {
+    /// <summary>
+    /// Represents a schedulable energy booking slot allocated for a microgrid hub.
+    /// </summary>
     public class EnergyBookingSlot
     {
         [BsonId]

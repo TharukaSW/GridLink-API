@@ -13,18 +13,31 @@ namespace GridLink.Data
         public MongoDbContext (IOptions<MongoDBSetting> setting)
         {
             _setting = setting.Value;
-            var client = new MongoClient (_setting.ConnectionString);
+            var mongoSettings = MongoClientSettings.FromConnectionString(_setting.ConnectionString);
+            mongoSettings.ServerSelectionTimeout = TimeSpan.FromSeconds(5);
+            var client = new MongoClient(mongoSettings);
             _database = client.GetDatabase(_setting.DatabaseName);
 
-            ConfigureIndexes();
-            SeedInitialAdminUser();
-            SeedInitialSolarStations();
+            try
+            {
+                ConfigureIndexes();
+                SeedInitialAdminUser();
+                SeedInitialSolarStations();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[MongoDbContext] Warning: Could not connect to MongoDB server during startup: {ex.Message}");
+            }
         }
 
-        public IMongoCollection<Users> users => _database.GetCollection<Users>(_setting.UserCollectioNames);
-        public IMongoCollection<SolarStationInfo> solarStations => _database.GetCollection<SolarStationInfo>(_setting.SolarStationCollectionName);
-        public IMongoCollection<EnergyBookingSlot> energyBookingSlots => _database.GetCollection<EnergyBookingSlot>(_setting.EnergyBookingSlotCollectionName);
-        public IMongoCollection<EnergyReservation> energyReservations => _database.GetCollection<EnergyReservation>(_setting.EnergyReservationCollectionName);
+        public IMongoCollection<Users> Users => _database.GetCollection<Users>(_setting.UserCollectioNames);
+        public IMongoCollection<Users> users => Users;
+        public IMongoCollection<SolarStationInfo> SolarStations => _database.GetCollection<SolarStationInfo>(_setting.SolarStationCollectionName);
+        public IMongoCollection<SolarStationInfo> solarStations => SolarStations;
+        public IMongoCollection<EnergyBookingSlot> EnergyBookingSlots => _database.GetCollection<EnergyBookingSlot>(_setting.EnergyBookingSlotCollectionName);
+        public IMongoCollection<EnergyBookingSlot> energyBookingSlots => EnergyBookingSlots;
+        public IMongoCollection<EnergyReservation> EnergyReservations => _database.GetCollection<EnergyReservation>(_setting.EnergyReservationCollectionName);
+        public IMongoCollection<EnergyReservation> energyReservations => EnergyReservations;
         
         public void ConfigureIndexes()
         {
@@ -35,11 +48,10 @@ namespace GridLink.Data
                 var emailIndexModel = new CreateIndexModel<Users>(emailIndexKeys, emailIndexOptions);
 
                 var nicIndexKeys = Builders<Users>.IndexKeys.Ascending(u => u.NIC);
-                var nicIndexOptions = new CreateIndexOptions 
+                var nicIndexOptions = new CreateIndexOptions<Users> 
                 { 
                     Unique = true, 
-                    Sparse = true,
-                    PartialFilterExpression = Builders<Users>.Filter.Ne(u => u.NIC, string.Empty) 
+                    PartialFilterExpression = Builders<Users>.Filter.Gt(u => u.NIC, string.Empty) 
                 };
                 var nicIndexModel = new CreateIndexModel<Users>(nicIndexKeys, nicIndexOptions);
 
@@ -190,6 +202,27 @@ namespace GridLink.Data
 
                     users.InsertOne(defaultAdmin);
                     Console.WriteLine("[MongoDbContext] Seeded default Backoffice administrator account (NIC: ADMIN00001V / admin@gridlink.com).");
+                }
+
+                bool operatorExists = users.Find(u => u.Role == UserRole.GridOperator).Any();
+                if (!operatorExists)
+                {
+                    var defaultOperator = new Users
+                    {
+                        NIC = "OPER00001V",
+                        FullName = "Lead Grid Operator",
+                        Email = "operator@gridlink.com",
+                        PhoneNumber = "0777654321",
+                        Address = "GridLink Substation Node 01, Colombo",
+                        Role = UserRole.GridOperator,
+                        Status = UserStatus.Active,
+                        HashPassword = PasswordHasher.HashPassword("Operator@123"),
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    };
+
+                    users.InsertOne(defaultOperator);
+                    Console.WriteLine("[MongoDbContext] Seeded default Grid Operator account (NIC: OPER00001V / operator@gridlink.com).");
                 }
             }
             catch (Exception ex)

@@ -1,3 +1,4 @@
+
 using System.Text;
 using GridLink.Data;
 using GridLink.Helpers;
@@ -10,7 +11,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 
-
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.Configure<MongoDBSetting>(builder.Configuration.GetSection("MongoDbSettings"));
@@ -21,9 +21,11 @@ builder.Services.AddSingleton<JwtHelper>();
 
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<ISolarStationRepository, SolarStationRepository>();
+builder.Services.AddScoped<IBookingSlotRepository, BookingSlotRepository>();
 builder.Services.AddScoped<IEnergyReservationRepository, EnergyReservationRepository>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IMicrogridNodeService, MicrogridNodeService>();
 builder.Services.AddScoped<IEnergyReservationService, EnergyReservationService>();
 
 builder.Services.AddScoped<IProsumerRepository, ProsumerRepository>();
@@ -107,11 +109,12 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseHttpsRedirection();
-
-
 app.UseCors("AllowAll");
 
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseAuthentication();
 app.UseAuthorization();
