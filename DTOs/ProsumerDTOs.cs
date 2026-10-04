@@ -39,7 +39,7 @@ namespace GridLink.DTOs
 
         [Required(ErrorMessage = "Email Address Required")]
         [EmailAddress(ErrorMessage = "Invalid Email Format")]
-        publi string Email { get; set;} = string.Empty;
+        public string Email { get; set;} = string.Empty;
 
         [Required(ErrorMessage = "Mobile Number is Required")]
         [Phone(ErrorMessage = "Invalid Mobile Number Format")]
